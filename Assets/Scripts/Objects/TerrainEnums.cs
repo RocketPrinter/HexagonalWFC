@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+[System.Serializable]
 public class TerrainType
 {
     public static readonly TerrainType[] All = { Grass, Forest, Sand, Water };
@@ -34,6 +35,7 @@ public class TerrainType
     }
 }
 
+[System.Serializable]
 public class UtilityType
 {
     public static UtilityType[] All = { Road, Rail, Water };
