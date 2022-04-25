@@ -32,20 +32,20 @@ public class TileSet : ScriptableObject
         return new Ray[12]
         {
             // terrains 
-            new(new(mul/2 , 1, h ),dir),
-            new(new(mul   , 1, 0 ),dir),
-            new(new(mul/2 , 1, -h),dir),
-            new(new(-mul/2, 1, -h),dir),
-            new(new(-mul  , 1, 0 ),dir),
-            new(new(-mul/2, 1, h ),dir),
+            new(new(mul/2 , 10, h ),dir),
+            new(new(mul   , 10, 0 ),dir),
+            new(new(mul/2 , 10, -h),dir),
+            new(new(-mul/2, 10, -h),dir),
+            new(new(-mul  , 10, 0 ),dir),
+            new(new(-mul/2, 10, h ),dir),
 
             // utilities
-            new(new(0     , 1, h   ),dir),
-            new(new(0.75f , 1, h/2 ),dir),
-            new(new(0.75f ,1, -h/2),dir),
-            new(new(0     , 1, -h  ),dir),
-            new(new(-0.75f, 1, -h/2),dir),
-            new(new(-0.75f, 1, h/2 ),dir),
+            new(new(0     , 10, h   ),dir),
+            new(new(0.75f , 10, h/2 ),dir),
+            new(new(0.75f , 10, -h/2),dir),
+            new(new(0     , 10, -h  ),dir),
+            new(new(-0.75f, 10, -h/2),dir),
+            new(new(-0.75f, 10, h/2 ),dir),
         };
     }
 
