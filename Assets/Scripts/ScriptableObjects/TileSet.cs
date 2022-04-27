@@ -65,43 +65,36 @@ public class TileSet : ScriptableObject
         List<string> paths = new();
         RecursiveSearch(new DirectoryInfo(path + "/Meshes"));
 
-        var prefabs = paths.Select(p => AssetDatabase.LoadAllAssetsAtPath(p))
-            .SelectMany(a => a)
-            .Select(x => x as GameObject)
-            .Where(x => x != null && !x.name.StartsWith('_'))
-            .ToList();
+        // filters out prefabs starting with _ and main assets
+        var prefabs = paths.Select(path => AssetDatabase.LoadAllAssetsAtPath(path))
+                .SelectMany(x => x)
+                .Select(x => x as GameObject)
+                .Where(x => x != null && !x.name.StartsWith('_') && AssetDatabase.IsSubAsset(x.GetInstanceID()))
+                .ToList();
 
-        ProcessPrefabs(prefabs);
+        int progId = Progress.Start("Processing prefabs...");
+        EditorCoroutineUtility.StartCoroutine(Coroutine(), this);
+        Progress.Remove(progId);
+        Clean();
 
         void RecursiveSearch(DirectoryInfo dir)
         {
             foreach (var fi in dir.GetFiles())
             {
-                if (fi.Extension != "meta")
+                if (fi.Extension != ".meta")
                     paths.Add(fi.FullName[fi.FullName.LastIndexOf("Assets")..]);
             }
 
             foreach (var di in dir.GetDirectories())
                 RecursiveSearch(di);
         }
-    }
-
-    void ProcessPrefabs(List<GameObject> prefabs)
-    {
-        int progId = Progress.Start("Processing tiles...");
-
-        EditorCoroutineUtility.StartCoroutine(Coroutine(), this);
-
-        Progress.Remove(progId);
-
-        Clean();
 
         IEnumerator Coroutine()
         {
             for (int i = 0; i < prefabs.Count; i++)
             {
                 ProcessPrefab(prefabs[i]);
-                
+
                 Progress.Report(progId, i, prefabs.Count);
                 yield return null;
             }
@@ -120,15 +113,15 @@ public class TileSet : ScriptableObject
                 name = prefab.name,
                 prefab = prefab
             };
-            AssetDatabase.CreateAsset(so, path + "/Tiles/" + prefab.name);
+            AssetDatabase.CreateAsset(so, path + "/Tiles/" + prefab.name + ".asset");
         }
         
         var colors = ColorPicker.ColorpickMultiple(prefab,rays);
         foreach (var c in colors)
-            Debug.Assert(c != null);
+            Debug.Assert(c.hit==false);
 
-        so.terrains = colors [0..5 ].Select(c => TerrainType.FromColor(c.Value)).ToArray();
-        so.utilities = colors[6..11].Select(c => UtilityType.FromColor(c.Value)).ToArray();
+        so.terrains = colors [0..5 ].Select(c => TerrainType.FromColor(c.color)).ToArray();
+        so.utilities = colors[6..11].Select(c => UtilityType.FromColor(c.color)).ToArray();
     }
 
     void Clean()
@@ -159,7 +152,7 @@ public class TileSet : ScriptableObject
         }
     }
 
-    /*[Button]
+    [Button]
     void Test()
     {
         var dic = Selection.objects.Select(x => x.GetType())
@@ -200,6 +193,5 @@ public class TileSet : ScriptableObject
                 RecursiveSearch(di);
         }
     }
-    */
 #endif
 }

@@ -6,12 +6,26 @@ using UnityEngine;
 #if UNITY_EDITOR
 public static class ColorPicker
 {
-    public static Color?[] ColorpickMultiple(GameObject prefab, Ray[] rays)
+    public readonly struct ColorPickerResult
+    {
+        public readonly bool hit;
+        public readonly Color color;
+        public readonly float height;
+
+        public ColorPickerResult(bool hit, Color color, float height)
+        {
+            this.hit = hit;
+            this.color = color;
+            this.height = height;
+        }
+    }
+
+    public static ColorPickerResult[] ColorpickMultiple(GameObject prefab, Ray[] rays)
     {
         var mesh = prefab.GetComponent<MeshFilter>().mesh;
         var materials = prefab.GetComponent<MeshRenderer>().materials;
 
-        Color?[] output = new Color?[rays.Length];
+        var output = new ColorPickerResult[rays.Length];
 
         // split submeshes
         var meshes = SplitMesh(mesh);
@@ -34,7 +48,8 @@ public static class ColorPicker
                     bestDist = distances[i][j];
                 }
             }
-            output[j] = materials[bestIndex].color;
+            if (bestDist != float.PositiveInfinity)
+                output[j] = new(true, materials[bestIndex].color, 10 - bestDist);
         }
 
         return output;

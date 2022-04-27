@@ -6,13 +6,11 @@ using UnityEngine;
 [System.Serializable]
 public class TerrainType
 {
-    public static readonly TerrainType[] All = { Grass, Forest, Sand, Water };
+    public static readonly TerrainType[] All = { Grass, Forest, Sand };
     
     public static readonly TerrainType Grass = new(nameof(Grass),new(98, 172, 104));
     public static readonly TerrainType Forest = new(nameof(Forest), new(100, 135, 103));
     public static readonly TerrainType Sand = new(nameof(Sand), new(245, 222, 145));
-    public static readonly TerrainType Water = new(nameof(Water), new(97, 132, 216));
-
     public readonly string name;
     public readonly Color color;
 
