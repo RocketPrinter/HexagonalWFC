@@ -55,7 +55,21 @@ public readonly struct HexPosition
     #endregion
 
     #region methods
-    public IEnumerator GetNeighbours()
+    public int Distance(HexPosition other)
+    {
+        var o = this - other;
+        if (o.X * o.Y >= 0)
+            return Mathf.Abs(o.X) + Mathf.Abs(o.Y);
+
+        if (o.X < 0)
+            o = new(-o.X, -o.Y);
+
+        if (o.X >= -o.Y)
+            return o.X;
+        return -o.Y;
+    }
+    public Vector2 ToGrid() => new Vector2(X * 1.5f, MathF.Sqrt(3) * (Y + (float) X/2));
+    public IEnumerable<HexPosition> GetNeighbours()
     {
         yield return Top;
         yield return TopRight;
@@ -64,7 +78,17 @@ public readonly struct HexPosition
         yield return BottomLeft;
         yield return BottomRight;
     }
-    
+    public IEnumerable<Vector2> GetVertexOffsets()
+    {
+        float h = Mathf.Sqrt(3) / 2;
+        yield return new Vector2(0.5f, h);
+        yield return new Vector2(1f, 0);
+        yield return new Vector2(0.5f, -h);
+        yield return new Vector2(-0.5f, -h);
+        yield return new Vector2(-1f, 0);
+        yield return new Vector2(-0.5f, h);
+    }
+
     public override bool Equals(object obj)
     {
         return obj is HexPosition position &&

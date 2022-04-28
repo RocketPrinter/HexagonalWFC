@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using NaughtyAttributes;
 
-public class TileSO : ScriptableObject
+public class Tile : ScriptableObject
 {
     public GameObject prefab;
 
