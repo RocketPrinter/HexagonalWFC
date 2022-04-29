@@ -6,11 +6,17 @@ using System.Linq;
 
 public class Slot : MonoBehaviour
 {
+    public class InvalidSuperpositionState : Exception { }
+
     public GridManager manager;
     public HexPosition hexPos;
 
     HashSet<Tile> superpositions = new();
-    
+    public IReadOnlyCollection<Tile> Superpositions => superpositions;
+
+    GameObject child;
+
+    #region Creation
     public static Slot Create(GridManager manager, HexPosition hexPos)
     {
         if (!manager.InBounds(hexPos) || manager.grid[hexPos.X, hexPos.Y] != null)
@@ -27,6 +33,86 @@ public class Slot : MonoBehaviour
 
         return slot;
     }
+
+    private void Start()
+    {
+        UpdateSelf();
+    }
+    #endregion
+
+    #region superpositions
+    public void AddSuperpositionWithoutPropagation(Tile tile)
+    {
+        superpositions.Add(tile);
+        UpdateSelf();
+    }
+
+    public void RemoveSuperposition(Tile tile, SuperpositionOperation op)
+    {
+        superpositions.Remove(tile);
+        op.RegisterRemoved(this,tile);
+        UpdateNeighbours(op);
+        UpdateSelf();
+    }
+
+    public void Collapse(Tile tile, SuperpositionOperation op)
+    {
+        Debug.Assert(superpositions.Contains(tile));
+        op.RegisterRemoved(this, superpositions.Where(t=>t!=tile));
+        
+        superpositions.Clear();
+        superpositions.Add(tile);
+        
+        UpdateNeighbours(op);
+        UpdateSelf();
+    }
+
+    public void UpdateSuperpositions(SuperpositionOperation op)
+    {
+        for (int i = 0; i < 5; i++)
+            UpdateSuperpositions(i, op);
+    }
+
+    public void UpdateSuperpositions(int side, SuperpositionOperation op)
+    {
+        throw new NotImplementedException();
+    }
+
+    void UpdateNeighbours(SuperpositionOperation op)
+    {
+        int i = 0;
+        foreach (var pos in hexPos.GetNeighbours())
+        {
+            manager.grid[pos.X, pos.Y].UpdateSuperpositions( (i + 3) % 6, op);
+            i++;
+        }
+    }
+    void UpdateSelf()
+    {
+        if (superpositions.Count == 1)
+        {
+            var prefab = superpositions.First().prefab;
+            // Unity doesn't recognise the difference between instanciated GOs and prefabs outside editor so this will have to do
+            if (child != null && child.name.StartsWith(prefab.name))
+                return;
+
+            if (child != null)
+                Destroy(child);
+            child = Instantiate(prefab, transform);
+
+            return;
+        }
+
+        if (child == null || !child.name.StartsWith(manager.superpositionPrefab.name))
+        {
+            if (child != null)
+                Destroy(child);
+            child = Instantiate(manager.superpositionPrefab, transform);
+        }
+
+        throw new NotImplementedException(); // todo: lazy
+    }
+    #endregion
 
     private void OnDrawGizmos()
     {

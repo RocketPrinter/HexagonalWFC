@@ -5,11 +5,17 @@ using NaughtyAttributes;
 
 public class GridManager : MonoBehaviour
 {
+    // to be used when slot has multiple superpositions
+    [Required]
+    public GameObject superpositionPrefab;
     [Required]
     public TileSet tileset;
-    [ValidateInput("ValidateSize","size must be >0 and odd")]
+    
+    [HorizontalLine, ValidateInput("ValidateSize","size must be >0 and odd")]
     public int size;
     bool ValidateSize(int newSize) => newSize > 0 && newSize % 2 == 1;
+
+    public bool throwOnInvalidStates;
 
     public Slot[,] grid;
     Stack<IOperation> opStack = new();
