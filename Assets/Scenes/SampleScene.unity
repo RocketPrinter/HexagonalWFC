@@ -249,7 +249,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5012b0c8c71d4204a93075730fe6bf7e, type: 3}
   m_Name: 
@@ -461,8 +461,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2c686bb43c493942a5104889a95b11b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  superpositionPrefab: {fileID: 0}
   tileset: {fileID: 11400000, guid: 391db5973744943499e6554ecfe6fd9c, type: 2}
   size: 11
+  throwOnInvalidStates: 0
 --- !u!4 &1924448874
 Transform:
   m_ObjectHideFlags: 0

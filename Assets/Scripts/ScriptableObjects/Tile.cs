@@ -17,6 +17,11 @@ public class Tile : ScriptableObject
     public TerrainType[] terrains;
     public UtilityType[] utilities;
 
+    public Connection GetConnection()
+    {
+        
+    }
+
     DropdownList<TerrainType> TerrainDropdown()
     {
         DropdownList<TerrainType> list = new();

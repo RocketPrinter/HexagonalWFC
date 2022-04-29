@@ -73,7 +73,7 @@ public class Slot : MonoBehaviour
             UpdateSuperpositions(i, op);
     }
 
-    public void UpdateSuperpositions(int side, SuperpositionOperation op)
+    public void UpdateSuperpositions(HexSide side, SuperpositionOperation op)
     {
         throw new NotImplementedException();
     }
@@ -83,7 +83,7 @@ public class Slot : MonoBehaviour
         int i = 0;
         foreach (var pos in hexPos.GetNeighbours())
         {
-            manager.grid[pos.X, pos.Y].UpdateSuperpositions( (i + 3) % 6, op);
+            manager.grid[pos.X, pos.Y].UpdateSuperpositions( new HexSide(i).Opposite, op);
             i++;
         }
     }
