@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using NaughtyAttributes;
+using System.Linq;
+using System.Text;
 
 public class Tile : ScriptableObject
 {
@@ -17,10 +19,10 @@ public class Tile : ScriptableObject
     public TerrainType[] terrains;
     public UtilityType[] utilities;
 
-    public Connection GetConnection()
-    {
-        
-    }
+    //public Connection GetConnection()
+    //{
+    //    
+    //}
 
     DropdownList<TerrainType> TerrainDropdown()
     {
@@ -41,4 +43,10 @@ public class Tile : ScriptableObject
         }
         return list;
     }
+
+    [Button]
+    void ShowTerrains() => Debug.Log(new StringBuilder().AppendJoin(" ", terrains.Select(x => x.name)));
+    
+    [Button]
+    void ShowUtilities() => Debug.Log(new StringBuilder().AppendJoin(" ", utilities.Select(x => x.name)));
 }

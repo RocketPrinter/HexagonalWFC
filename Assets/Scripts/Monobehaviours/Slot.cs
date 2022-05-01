@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using TMPro;
 
 public class Slot : MonoBehaviour
 {
@@ -14,7 +15,11 @@ public class Slot : MonoBehaviour
     HashSet<Tile> superpositions = new();
     public IReadOnlyCollection<Tile> Superpositions => superpositions;
 
+    //HashSet<TerrainType>[] terrainCache = new HashSet<TerrainType>[6] { new(), new(), new(), new(), new(), new() };
+    //HashSet<UtilityType>[] utilityCache = new HashSet<UtilityType>[6] { new(), new(), new(), new(), new(), new() };
+
     GameObject child;
+    TextMeshPro childTextCache;
 
     #region Creation
     public static Slot Create(GridManager manager, HexPosition hexPos)
@@ -23,7 +28,8 @@ public class Slot : MonoBehaviour
             throw new InvalidOperationException();
 
         var go = new GameObject($"Slot {{ {hexPos.X}, {hexPos.Y}}}");
-        var v2 = hexPos.ToGrid();
+        go.transform.SetParent(manager.transform);
+        var v2 = hexPos.ToGrid() - manager.middle.ToGrid();
         go.transform.position = new Vector3(v2.x,0,v2.y);
         
         var slot = go.AddComponent<Slot>();
@@ -108,9 +114,11 @@ public class Slot : MonoBehaviour
             if (child != null)
                 Destroy(child);
             child = Instantiate(manager.superpositionPrefab, transform);
+            childTextCache = child.GetComponentInChildren<TextMeshPro>();
         }
 
-        throw new NotImplementedException(); // todo: lazy
+        childTextCache.text = superpositions.Count.ToString();
+        childTextCache.color = superpositions.Count > 0 ? Color.white : Color.red;
     }
     #endregion
 

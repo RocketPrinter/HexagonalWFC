@@ -20,7 +20,7 @@ public readonly struct Connection
     public static bool operator !=(Connection a, Connection b) => a.left != b.left || a.right != b.right || a.utility != b.utility;
 
     // methods
-    public bool Connects(Connection other) => left == other.right &&
+    public bool Connects(Connection other) => left == other.right && utility == other.utility && right == other.left;
     public override bool Equals(object obj)
     {
         return obj is Connection connection && this == connection;

@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 #if UNITY_EDITOR
 public static class ColorPicker
@@ -22,8 +24,8 @@ public static class ColorPicker
 
     public static ColorPickerResult[] ColorpickMultiple(GameObject prefab, Ray[] rays)
     {
-        var mesh = prefab.GetComponent<MeshFilter>().mesh;
-        var materials = prefab.GetComponent<MeshRenderer>().materials;
+        var mesh = prefab.GetComponent<MeshFilter>().sharedMesh;
+        var materials = prefab.GetComponent<MeshRenderer>().sharedMaterials;
 
         var output = new ColorPickerResult[rays.Length];
 
@@ -32,8 +34,8 @@ public static class ColorPicker
 
         // raycast submeshes
         float[][] distances = new float[meshes.Length][];
-        for (int i = 0; i < mesh.subMeshCount; i++)
-            distances[i] = Raycast(prefab ,rays);
+        for (int i = 0; i < meshes.Length; i++)
+            distances[i] = Raycast(meshes[i], rays);
 
         // calculate result
         for (int j=0;j<rays.Length;j++)
@@ -75,25 +77,24 @@ public static class ColorPicker
         return output;
     }
 
-    static float[] Raycast(GameObject prefab, Ray[] rays)
+    static readonly Vector3 magicPositon = new(666, 666, 666);
+
+    static float[] Raycast(Mesh mesh, Ray[] rays)
     {
         var output = new float[rays.Length];
 
-        MeshCollider tempCollider = null;
-        if (!prefab.TryGetComponent<Collider>(out var collider))
-        {
-            tempCollider = prefab.AddComponent<MeshCollider>();
-        }
+        var go = new GameObject("temp", typeof(MeshCollider));
+        var mc = go.GetComponent<MeshCollider>();
+        go.transform.position = magicPositon;
 
         for (int i = 0; i < rays.Length; i++)
         {
-            bool b = prefab.scene.GetPhysicsScene().Raycast(rays[i].origin, rays[i].direction, out RaycastHit hitInfo);
+            bool b = Physics.Raycast(rays[i].origin + magicPositon, rays[i].direction, out RaycastHit hitInfo);
             output[i] = b ? hitInfo.distance : float.PositiveInfinity;
         }
 
-        if (tempCollider != null)
-            Object.Destroy(tempCollider);
-
+        go.transform.position = magicPositon * 2; // in case it doesn't get destroyed immediatly
+        GameObject.DestroyImmediate(go);
         return output;
     }
 }

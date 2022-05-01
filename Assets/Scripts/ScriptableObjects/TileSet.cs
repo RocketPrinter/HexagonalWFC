@@ -108,11 +108,9 @@ public class TileSet : ScriptableObject
         Tile so = tiles.Find(x => x.prefab);
         if (so == null)
         {
-            so = new()
-            {
-                name = prefab.name,
-                prefab = prefab
-            };
+            so = CreateInstance<Tile>();
+            so.name = prefab.name;
+            so.prefab = prefab;
             AssetDatabase.CreateAsset(so, path + "/Tiles/" + prefab.name + ".asset");
         }
         
@@ -132,11 +130,11 @@ public class TileSet : ScriptableObject
         List<string> failedPaths = new();
         AssetDatabase.DeleteAssets(deleted.Select(x => AssetDatabase.GetAssetPath(x)).ToArray(), failedPaths);
         if (failedPaths.Count > 0)
-            Debug.LogWarning($"Failed to deleted {failedPaths.Count} assets");
+            Debug.LogWarning($"Failed to delete {failedPaths.Count} assets");
     }
 
     [DrawGizmo(GizmoType.Active)]
-    static void DrawGizmoForMyScript(Transform scr, GizmoType gizmoType)
+    static void DrawGizmo(Transform scr, GizmoType gizmoType)
     {
         Gizmos.color = Color.cyan;
         int i = 0;
@@ -191,6 +189,19 @@ public class TileSet : ScriptableObject
 
             foreach (var di in dir.GetDirectories())
                 RecursiveSearch(di);
+        }
+    }
+
+    [Button]
+    void Test3()
+    {
+        var assets = AssetDatabase.LoadAllAssetsAtPath("Assets/Tiles/Meshes/Hexagonal WFC.fbx")
+            .Select(x => x as GameObject)
+            .Where(x => x != null && !x.name.StartsWith('_') && AssetDatabase.IsSubAsset(x.GetInstanceID()))
+            .ToList();
+        foreach (var go in assets)
+        {
+            Debug.Log($"{go.name}      {go.GetComponent<MeshFilter>().sharedMesh}      {go.GetComponent<MeshRenderer>().sharedMaterials.Length}");
         }
     }
 #endif
