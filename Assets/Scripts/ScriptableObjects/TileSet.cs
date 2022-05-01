@@ -74,8 +74,6 @@ public class TileSet : ScriptableObject
 
         int progId = Progress.Start("Processing prefabs...");
         EditorCoroutineUtility.StartCoroutine(Coroutine(), this);
-        Progress.Remove(progId);
-        Clean();
 
         void RecursiveSearch(DirectoryInfo dir)
         {
@@ -99,7 +97,8 @@ public class TileSet : ScriptableObject
                 yield return null;
             }
 
-            yield break;
+            Progress.Remove(progId);
+            Clean();
         }
     }
 
@@ -118,8 +117,8 @@ public class TileSet : ScriptableObject
         foreach (var c in colors)
             Debug.Assert(c.hit==false);
 
-        so.terrains = colors [0..5 ].Select(c => TerrainType.FromColor(c.color)).ToArray();
-        so.utilities = colors[6..11].Select(c => UtilityType.FromColor(c.color)).ToArray();
+        so.terrains = colors [0..5 ].Select(c => c.color.ToTerrainType()).ToArray();
+        so.utilities = colors[6..11].Select(c => c.color.ToUtilityType()).ToArray();
     }
 
     void Clean()
@@ -150,7 +149,7 @@ public class TileSet : ScriptableObject
         }
     }
 
-    [Button]
+    //[Button]
     void Test()
     {
         var dic = Selection.objects.Select(x => x.GetType())
@@ -167,7 +166,7 @@ public class TileSet : ScriptableObject
         }
     }
 
-    [Button]
+    //[Button]
     void Test2()
     {
         List<string> paths = new();
@@ -192,7 +191,7 @@ public class TileSet : ScriptableObject
         }
     }
 
-    [Button]
+    //[Button]
     void Test3()
     {
         var assets = AssetDatabase.LoadAllAssetsAtPath("Assets/Tiles/Meshes/Hexagonal WFC.fbx")

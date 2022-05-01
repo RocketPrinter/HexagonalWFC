@@ -1,67 +1,82 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 [System.Serializable]
-public class TerrainType
+public enum TerrainType
 {
-    public static readonly TerrainType Grass = new(nameof(Grass), new(98, 172, 104));
-    public static readonly TerrainType Forest = new(nameof(Forest), new(100, 135, 103));
-    public static readonly TerrainType Sand = new(nameof(Sand), new(245, 222, 145));
-
-    public static readonly TerrainType[] All = { Grass, Forest, Sand };
- 
-    public readonly string name;
-    public readonly Color color;
-    
-    public static implicit operator Color(TerrainType type) => type.color;
-
-    public static TerrainType FromColor(Color c) => All
-        .Select(t => (t,t.color.DistanceSquared(c)))
-        .OrderBy(x => x.Item2)
-        .Select(x=> x.t)
-        .First();
-
-    public static TerrainType FromString(string s) => All
-        .Where(t => t.name == s)
-        .First();
-
-    private TerrainType(string name, Color color)
-    {
-        this.name = name;
-        this.color = color;
-    }
+    Null = 0,
+    Grass = 1,
+    Forest = 2,
+    Sand = 3
 }
 
-[System.Serializable]
-public class UtilityType
+public static class TerrainTypeExtensions
 {
-
-    public static readonly UtilityType Road = new(nameof(Road), new(73, 88, 103));
-    public static readonly UtilityType Rail = new(nameof(Rail), new(189, 213, 234));
-    public static readonly UtilityType Water = new(nameof(Water), new(97, 132, 216));
-
-    public static readonly UtilityType[] All = { Road, Rail, Water };
-    
-    public readonly string name;
-    public readonly Color color;
-
-    public static implicit operator Color(UtilityType type) => type.color;
-
-    public static UtilityType FromColor(Color c) => All
-        .Select(t => (t, t.color.DistanceSquared(c)))
-        .OrderBy(x => x.Item2)
-        .Select(x => x.t)
-        .First();
-
-    public static UtilityType FromString(string s) => All
-        .Where(t => t.name == s)
-        .First();
-
-    private UtilityType(string name, Color color)
+    public static readonly (string name, Color color)[] All =
     {
-        this.name = name;
-        this.color = color;
-    }
+        default,
+        (nameof(TerrainType.Grass),new(98, 172, 104)),
+        (nameof(TerrainType.Forest),new(100, 135, 103)),
+        (nameof(TerrainType.Sand),new(245, 222, 145)),
+    };
+
+    public const float treshold = 20;
+
+    public static string GetName(this TerrainType type) => All[(int)type].name;
+
+    public static Color GetColor(this TerrainType type) => All[(int)type].color;
+
+    public static TerrainType ToTerrainType(this Color c) => 
+        Enumerable.Range(1, All.Length - 1)
+        .Select(i => (i, All[i], All[i].color.DistanceSquared(c)))
+        .OrderBy(p => p.i)
+        .Select(p => (TerrainType)p.i)
+        .FirstOrDefault();
+
+    public static TerrainType ToTerrainType(this string s) => 
+        Enumerable.Range(1, All.Length - 1)
+        .Where(i => All[i].name == s)
+        .Select(i => (TerrainType)i)
+        .FirstOrDefault();
+}
+
+public enum UtilityType
+{
+    Null = 0,
+    Road = 1,
+    Rail = 2,
+    Water = 3
+}
+
+public static class UtilityTypeExtensions
+{
+    public static readonly (string name, Color color)[] All =
+    {
+        default,
+        (nameof(UtilityType.Road),new(73, 88, 103)),
+        (nameof(UtilityType.Rail),new(189, 213, 234)),
+        (nameof(UtilityType.Water),new(97, 132, 216)),
+    };
+
+    public const float treshold = 20;
+
+    public static string GetName(this UtilityType type) => All[(int)type].name;
+
+    public static Color GetColor(this UtilityType type) => All[(int)type].color;
+
+    public static UtilityType ToUtilityType(this Color c) =>
+        Enumerable.Range(1, All.Length - 1)
+        .Select(i => (i, All[i], All[i].color.DistanceSquared(c)))
+        .OrderBy(p => p.i)
+        .Select(p => (UtilityType)p.i)
+        .FirstOrDefault();
+
+    public static UtilityType ToUtilityType(this string s) =>
+        Enumerable.Range(1, All.Length - 1)
+        .Where(i => All[i].name == s)
+        .Select(i => (UtilityType)i)
+        .FirstOrDefault();
 }

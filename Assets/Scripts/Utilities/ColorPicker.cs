@@ -89,7 +89,7 @@ public static class ColorPicker
 
         for (int i = 0; i < rays.Length; i++)
         {
-            bool b = Physics.Raycast(rays[i].origin + magicPositon, rays[i].direction, out RaycastHit hitInfo);
+            bool b = go.scene.GetPhysicsScene().Raycast(rays[i].origin + magicPositon, rays[i].direction, out RaycastHit hitInfo);
             output[i] = b ? hitInfo.distance : float.PositiveInfinity;
         }
 

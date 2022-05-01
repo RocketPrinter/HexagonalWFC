@@ -13,5 +13,7 @@ MonoBehaviour:
   m_Name: Water
   m_EditorClassIdentifier: 
   prefab: {fileID: 6572683484597976625, guid: 8f9a73f7dc6eddb4f970f732b10b96fc, type: 3}
-  terrains: []
-  utilities: []
+  provider: 0
+  receiver: 0
+  terrains: 
+  utilities: 

@@ -13,5 +13,7 @@ MonoBehaviour:
   m_Name: Beach 2
   m_EditorClassIdentifier: 
   prefab: {fileID: -4145567301983607420, guid: 8f9a73f7dc6eddb4f970f732b10b96fc, type: 3}
-  terrains: []
-  utilities: []
+  provider: 0
+  receiver: 0
+  terrains: 
+  utilities: 
