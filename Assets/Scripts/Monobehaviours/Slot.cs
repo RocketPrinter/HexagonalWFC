@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using TMPro;
+using NaughtyAttributes;
 
+[SelectionBase] // very cool attribute
 public class Slot : MonoBehaviour
 {
     public class InvalidSuperpositionState : Exception { }
@@ -12,16 +14,20 @@ public class Slot : MonoBehaviour
     public GridManager manager;
     public HexPosition hexPos;
 
-    HashSet<Tile> superpositions = new();
+    HashSet<Tile> superpositions;
     public IReadOnlyCollection<Tile> Superpositions => superpositions;
+    public bool collapsed => superpositions.Count == 1;
 
-    //HashSet<TerrainType>[] terrainCache = new HashSet<TerrainType>[6] { new(), new(), new(), new(), new(), new() };
-    //HashSet<UtilityType>[] utilityCache = new HashSet<UtilityType>[6] { new(), new(), new(), new(), new(), new() };
-
+    // used for visuals
+    bool queueVisualsUpdate;
     GameObject child;
     TextMeshPro childTextCache;
 
-    #region Creation
+    // caching
+    bool sideCacheValid = false;
+    public HashSet<(TerrainType, UtilityType)>[] _cache = new HashSet<(TerrainType, UtilityType)>[6];
+
+    #region Creation and loops
     public static Slot Create(GridManager manager, HexPosition hexPos)
     {
         if (!manager.InBounds(hexPos) || manager.grid[hexPos.X, hexPos.Y] != null)
@@ -36,13 +42,40 @@ public class Slot : MonoBehaviour
         slot.manager = manager;
         slot.hexPos = hexPos;
         manager.grid[hexPos.X, hexPos.Y] = slot;
+        slot.superpositions = manager.tileset.tiles.ToHashSet();
 
         return slot;
     }
 
     private void Start()
     {
-        UpdateSelf();
+        UpdateVisuals();
+    }
+
+    private void Update()
+    {
+        // update visuals
+        if (queueVisualsUpdate)
+        {
+            queueVisualsUpdate = false;
+            UpdateVisuals();
+        }
+    }
+    #endregion
+
+    #region side cache
+    public HashSet<(TerrainType, UtilityType)> GetSideCache(HexSide side)
+    {
+        if (sideCacheValid == false)
+        {
+            sideCacheValid = true;
+            for (int i=0;i<6;i++)
+            {
+                _cache[i] = superpositions.Select(x => x.GetSide(i)).ToHashSet();
+            }
+        }
+
+        return _cache[side];
     }
     #endregion
 
@@ -50,52 +83,74 @@ public class Slot : MonoBehaviour
     public void AddSuperpositionWithoutPropagation(Tile tile)
     {
         superpositions.Add(tile);
-        UpdateSelf();
+        sideCacheValid = false;
+        queueVisualsUpdate = true;
     }
 
-    public void RemoveSuperposition(Tile tile, SuperpositionOperation op)
-    {
-        superpositions.Remove(tile);
-        op.RegisterRemoved(this,tile);
-        UpdateNeighbours(op);
-        UpdateSelf();
-    }
-
-    public void Collapse(Tile tile, SuperpositionOperation op)
+    // collapses tile and propagates changes
+    public void Collapse(Tile tile, CollapseOperation op)
     {
         Debug.Assert(superpositions.Contains(tile));
         op.RegisterRemoved(this, superpositions.Where(t=>t!=tile));
         
         superpositions.Clear();
         superpositions.Add(tile);
+
+        sideCacheValid = false;
+        queueVisualsUpdate = true;
         
-        UpdateNeighbours(op);
-        UpdateSelf();
+        PropagateToNeighbours(op);
     }
 
-    public void UpdateSuperpositions(SuperpositionOperation op)
+    void UpdateSuperpositionsFromSide(HexSide side, Slot otherSlot, CollapseOperation op)
     {
-        for (int i = 0; i < 5; i++)
-            UpdateSuperpositions(i, op);
+        if (collapsed) return;
+
+        var otherSide = otherSlot.GetSideCache(side.Opposite);
+        var remove = GetSideCache(side)
+            .Where(p => !otherSide.Contains(p)) // find in cache pairs that can't connect
+            .Select(p => superpositions.Where(x=>x.GetSide(side) == p) ) // find tiles with these pairs
+            .SelectMany(x=>x)
+            .ToList();
+
+        if (remove.Count == 0) return;
+
+        op.RegisterRemoved(this, remove);
+        foreach (var tile in remove)
+            superpositions.Remove(tile);
+        sideCacheValid = false;
+        queueVisualsUpdate = true;
+
+        PropagateToNeighbours(side, op);
     }
 
-    public void UpdateSuperpositions(HexSide side, SuperpositionOperation op)
-    {
-        throw new NotImplementedException();
-    }
-
-    void UpdateNeighbours(SuperpositionOperation op)
+    // propagates to neighbouring slots
+    void PropagateToNeighbours(CollapseOperation op)
     {
         int i = 0;
         foreach (var pos in hexPos.GetNeighbours())
         {
-            manager.grid[pos.X, pos.Y].UpdateSuperpositions( new HexSide(i).Opposite, op);
+            if (manager.InBounds(pos))
+                manager.grid[pos.X, pos.Y].UpdateSuperpositionsFromSide( new HexSide(i).Opposite, this, op);
             i++;
         }
     }
-    void UpdateSelf()
+
+    // propagates to neighbouring slots minus one
+    void PropagateToNeighbours(HexSide minus, CollapseOperation op)
     {
-        if (superpositions.Count == 1)
+        int i = 0;
+        foreach (var pos in hexPos.GetNeighbours())
+        {
+            if (manager.InBounds(pos) && i != minus)
+                manager.grid[pos.X, pos.Y].UpdateSuperpositionsFromSide(new HexSide(i).Opposite, this, op);
+            i++;
+        }
+    }
+    
+    void UpdateVisuals()
+    {
+        if (collapsed)
         {
             var prefab = superpositions.First().prefab;
             // Unity doesn't recognise the difference between instanciated GOs and prefabs outside editor so this will have to do
@@ -122,6 +177,7 @@ public class Slot : MonoBehaviour
     }
     #endregion
 
+#if UNITY_EDITOR
     private void OnDrawGizmos()
     {
         const float mul = 0.9f;
@@ -133,4 +189,28 @@ public class Slot : MonoBehaviour
             Gizmos.DrawLine(coords[i-1],coords[i]);
         Gizmos.DrawLine(coords[coords.Count-1],coords[0]);
     }
+
+    [Dropdown("GetTileDropdown")]
+    public Tile tileSelector = null;
+
+    DropdownList<Tile> GetTileDropdown()
+    {
+        var list = new DropdownList<Tile>();
+        if (superpositions.Count == 0)
+            list.Add("NONE",null);
+        else foreach (var tile in superpositions)
+            {
+                list.Add(tile.name, tile);
+            }
+        return list;
+    }
+
+    [Button("Collapse")]
+    public void CollapseButton()
+    {
+        if (tileSelector == null || !superpositions.Contains(tileSelector)) return;
+
+        manager.ExecuteOperation(new CollapseOperation(this, tileSelector));
+    }
+#endif
 }

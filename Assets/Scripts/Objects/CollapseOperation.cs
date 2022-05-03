@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 
-public class SuperpositionOperation : IOperation
+public class CollapseOperation : IOperation
 {
     public Slot slot { get; init; }
     public Tile tile { get; init; }
 
     List<(Slot slot, Tile removed)> changes=new();
     
-    public SuperpositionOperation(Slot slot, Tile tile)
+    public CollapseOperation(Slot slot, Tile tile)
     {
         this.slot = slot;
         this.tile = tile;

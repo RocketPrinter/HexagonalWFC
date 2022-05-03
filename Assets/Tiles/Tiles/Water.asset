@@ -15,5 +15,5 @@ MonoBehaviour:
   prefab: {fileID: 6572683484597976625, guid: 8f9a73f7dc6eddb4f970f732b10b96fc, type: 3}
   provider: 0
   receiver: 0
-  terrains: 
-  utilities: 
+  terrainEdges: 030000000300000003000000030000000300000003000000
+  utilityEdges: 000000000000000000000000000000000000000000000000

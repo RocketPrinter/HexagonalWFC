@@ -12,5 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b037e0153450a049b8ce8156806d067, type: 3}
   m_Name: TileSet
   m_EditorClassIdentifier: 
-  tiles: []
+  tiles:
+  - {fileID: 11400000, guid: a1e2908d86445574cae723099026a9bf, type: 2}
+  - {fileID: 11400000, guid: 0e8959401594f6145a8c8163bcc95d25, type: 2}
+  - {fileID: 11400000, guid: 841858704e22f6a4ea2833c0f54af5e2, type: 2}
+  - {fileID: 11400000, guid: eb38656e61ad9dd4381feec26136f8b1, type: 2}
+  - {fileID: 11400000, guid: 7127b6f3ff0768144969f13b0673bcd2, type: 2}
+  - {fileID: 11400000, guid: 9a9a4cfa0c0d3ce40a5e0277f1252c44, type: 2}
   path: Assets/Tiles

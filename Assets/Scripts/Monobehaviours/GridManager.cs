@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using NaughtyAttributes;
+using System;
 
 public class GridManager : MonoBehaviour
 {
@@ -15,6 +16,8 @@ public class GridManager : MonoBehaviour
     public int size;
     bool ValidateSize(int newSize) => newSize > 0 && newSize % 2 == 1;
 
+    public bool blockPropagations; // todo: implement dummy
+    public bool randomizeNeighbourPropagationOrder; // todo: implement dummy
     public bool throwOnInvalidStates;
 
     public Slot[,] grid;
@@ -50,22 +53,17 @@ public class GridManager : MonoBehaviour
         op.Execute();
     }
 
-    public void AddMarker() => opStack.Push(new MarkerOperation());
+    [Button]
+    public void RefreshAll()
+    {
+        throw new NotImplementedException();
+    }
 
+    [Button("Undo")]
     public void UndoOperation()
     {
         if (opStack.Count > 0)
             opStack.Pop().Undo();
-    }
-
-    public void UndoUntilMarker()
-    {
-        while (opStack.Count > 0)
-        {
-            var op = opStack.Pop();
-            op.Undo();
-            if (op is MarkerOperation) break;
-        }
     }
     #endregion
 }

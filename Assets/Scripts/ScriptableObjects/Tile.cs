@@ -14,11 +14,14 @@ public class Tile : ScriptableObject
     public UtilityType receiver;
 
     [HorizontalLine]
-    public TerrainType[] terrains;
-    public UtilityType[] utilities;
+    public TerrainType[] terrainEdges = new TerrainType[6];
+    public UtilityType[] utilityEdges = new UtilityType[6];
 
-    //public Connection GetConnection()
-    //{
-    //    
-    //}
+    public (TerrainType, UtilityType) GetSide(HexSide side) => (terrainEdges[(int)side], utilityEdges[(int)side]);
+    
+    public void OnEnable()
+    {
+        //make sure prefab is centered
+        prefab.transform.position = Vector3.zero;
+    }
 } 

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -73,7 +74,7 @@ public static class ColorPicker
 
             output[i] = m;
         }
-
+        
         return output;
     }
 
