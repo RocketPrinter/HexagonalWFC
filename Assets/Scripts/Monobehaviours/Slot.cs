@@ -42,7 +42,7 @@ public class Slot : MonoBehaviour
         slot.manager = manager;
         slot.hexPos = hexPos;
         manager.grid[hexPos.X, hexPos.Y] = slot;
-        slot.superpositions = manager.tileset.tiles.ToHashSet();
+        slot.superpositions = manager.tileset.GetTiles().ToHashSet();
 
         return slot;
     }
@@ -152,14 +152,15 @@ public class Slot : MonoBehaviour
     {
         if (collapsed)
         {
-            var prefab = superpositions.First().prefab;
+            var tile = superpositions.First();
             // Unity doesn't recognise the difference between instanciated GOs and prefabs outside editor so this will have to do
-            if (child != null && child.name.StartsWith(prefab.name))
+            if (child != null && child.name.StartsWith(tile.name))
                 return;
 
             if (child != null)
                 Destroy(child);
-            child = Instantiate(prefab, transform);
+            child = Instantiate(tile.prefab, transform.position, tile.rotationQuaternion, transform);
+            child.name = tile.name; // makes sure prefab maches tile name
 
             return;
         }
