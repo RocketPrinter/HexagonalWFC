@@ -3,25 +3,32 @@ using System.Collections.Generic;
 using UnityEngine;
 using NaughtyAttributes;
 using System;
+using System.Linq;
 
 public class GridManager : MonoBehaviour
 {
+    #region Inspector
     // to be used when slot has multiple superpositions
+    [Header("Resources")]
     [Required]
     public GameObject superpositionPrefab;
     [Required]
     public TileSet tileset;
-    
-    [HorizontalLine, ValidateInput("ValidateSize","size must be >0 and odd")]
+
+    [Header("Initial settings"), HorizontalLine]
+    [ValidateInput("ValidateSize","size must be >0 and odd")]
     public int size;
     bool ValidateSize(int newSize) => newSize > 0 && newSize % 2 == 1;
+    public int seed;
 
-    public bool blockPropagations; // todo: implement dummy
-    public bool randomizeNeighbourPropagationOrder; // todo: implement dummy
-    public bool throwOnInvalidStates;
+    [Header("Settings"), HorizontalLine]
+    public bool throwOnInvalidStates = true;
+    public bool instantUpdating = true;
+    #endregion
 
     public Slot[,] grid;
-    Stack<IOperation> opStack = new();
+    RandomQueue<(Slot slot, HexSide side, Slot other, RemoveSuperpositionsChange change)> updateQueue = new();
+    Stack<IChange> changesStack = new();
 
     public HexPosition middle;
 
@@ -46,24 +53,83 @@ public class GridManager : MonoBehaviour
         return middle.Distance(hexPos) <= size/2;
     }
 
-    #region Operations
-    public void ExecuteOperation(IOperation op)
+    #region Updates
+    public void RegisterUpdate(Slot slot, HexSide side, Slot other, RemoveSuperpositionsChange change)
     {
-        opStack.Push(op);
-        op.Execute();
+        updateQueue.Push((slot, side, other, change));
+
+        if (instantUpdating)
+            UpdateAll();
+    }
+
+    [Button]
+    public void UpdateOnce()
+    {
+        if (updateQueue.Count == 0)
+            return;
+
+        var info = updateQueue.PopRandom();
+        info.slot.UpdateFromSide(info.side, info.other, info.change);
+    }
+    
+    [Button]
+    public void UpdateAll()
+    {
+        while (updateQueue.Count > 0)
+            UpdateOnce();
+    }
+    
+    public void AssertNoPendingUpdates()
+    {
+        if (updateQueue.Count > 0 && throwOnInvalidStates)
+            throw new InvalidOperationException();
+    }
+    #endregion
+
+    #region Operations
+    public void RegisterChange(IChange op) => changesStack.Push(op);
+
+    [Button("Undo")]
+    public void UndoChange()
+    {
+        AssertNoPendingUpdates();
+        if (changesStack.Count > 0)
+            changesStack.Pop().Undo();
     }
 
     [Button]
     public void RefreshAll()
     {
+        AssertNoPendingUpdates();
+
         throw new NotImplementedException();
     }
+    #endregion
 
-    [Button("Undo")]
-    public void UndoOperation()
+    #region Debug
+    private void OnDrawGizmos()
     {
-        if (opStack.Count > 0)
-            opStack.Pop().Undo();
+        if (updateQueue == null) return;
+        var edgeOffsets = HexPosition.GetEdgeCenterOffsets().ToList();
+
+        foreach (var tuple in updateQueue.Values)
+        {
+            Gizmos.color = new Color(0,1,0,0.1f);
+            Gizmos.DrawSphere(tuple.slot.transform.position, 1.2f);
+            Gizmos.color = Color.green;
+
+            Vector3 from = tuple.other.transform.position + new Vector3(0,2,0);
+            Vector3 to = tuple.slot.transform.position + new Vector3(0, 2, 0);
+
+            Gizmos.DrawLine(from, to);
+
+            float t = Time.timeSinceLevelLoad % 1;
+            Vector3 spherePos = new Vector3(
+                Mathf.SmoothStep(from.x,to.x,t),
+                Mathf.SmoothStep(from.y,to.y,t),
+                Mathf.SmoothStep(from.z,to.z,t));
+            Gizmos.DrawSphere(spherePos, 0.1f);
+        }
     }
     #endregion
 }

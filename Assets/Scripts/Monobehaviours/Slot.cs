@@ -88,8 +88,10 @@ public class Slot : MonoBehaviour
     }
 
     // collapses tile and propagates changes
-    public void Collapse(Tile tile, CollapseOperation op)
+    public void Collapse(Tile tile, RemoveSuperpositionsChange op)
     {
+        manager.AssertNoPendingUpdates();
+
         Debug.Assert(superpositions.Contains(tile));
         op.RegisterRemoved(this, superpositions.Where(t=>t!=tile));
         
@@ -99,10 +101,11 @@ public class Slot : MonoBehaviour
         sideCacheValid = false;
         queueVisualsUpdate = true;
         
-        PropagateToNeighbours(op);
+        UpdateNeighbours(op);
     }
 
-    void UpdateSuperpositionsFromSide(HexSide side, Slot otherSlot, CollapseOperation op)
+    // NEVER CALL DIRECTLY! Use manager.RegisterUpdate
+    public void UpdateFromSide(HexSide side, Slot otherSlot, RemoveSuperpositionsChange op)
     {
         if (collapsed) return;
 
@@ -121,29 +124,29 @@ public class Slot : MonoBehaviour
         sideCacheValid = false;
         queueVisualsUpdate = true;
 
-        PropagateToNeighbours(side, op);
+        UpdateNeighbours(side, op);
     }
 
     // propagates to neighbouring slots
-    void PropagateToNeighbours(CollapseOperation op)
+    void UpdateNeighbours(RemoveSuperpositionsChange op)
     {
         int i = 0;
         foreach (var pos in hexPos.GetNeighbours())
         {
             if (manager.InBounds(pos))
-                manager.grid[pos.X, pos.Y].UpdateSuperpositionsFromSide( new HexSide(i).Opposite, this, op);
+                manager.RegisterUpdate(manager.grid[pos.X, pos.Y], new HexSide(i).Opposite, this, op);
             i++;
         }
     }
 
     // propagates to neighbouring slots minus one
-    void PropagateToNeighbours(HexSide minus, CollapseOperation op)
+    void UpdateNeighbours(HexSide minus, RemoveSuperpositionsChange op)
     {
         int i = 0;
         foreach (var pos in hexPos.GetNeighbours())
         {
             if (manager.InBounds(pos) && i != minus)
-                manager.grid[pos.X, pos.Y].UpdateSuperpositionsFromSide(new HexSide(i).Opposite, this, op);
+                manager.RegisterUpdate(manager.grid[pos.X, pos.Y], new HexSide(i).Opposite, this, op);
             i++;
         }
     }
@@ -182,7 +185,7 @@ public class Slot : MonoBehaviour
     private void OnDrawGizmos()
     {
         const float mul = 0.9f;
-        var coords = hexPos.GetVertexOffsets().Select(v2 => transform.position + new Vector3(v2.x,0,v2.y) * mul).ToList();
+        var coords = HexPosition.GetVertexOffsets().Select(v2 => transform.position + new Vector3(v2.x,0,v2.y) * mul).ToList();
 
         Gizmos.color = hexPos == manager.middle ? Color.yellow : Color.green;
         
@@ -211,7 +214,10 @@ public class Slot : MonoBehaviour
     {
         if (tileSelector == null || !superpositions.Contains(tileSelector)) return;
 
-        manager.ExecuteOperation(new CollapseOperation(this, tileSelector));
+        var change = new RemoveSuperpositionsChange();
+        manager.RegisterChange(change);
+
+        Collapse(tileSelector, change);
     }
 #endif
 }

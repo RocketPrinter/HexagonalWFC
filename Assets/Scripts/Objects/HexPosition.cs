@@ -76,10 +76,11 @@ public readonly struct HexPosition
         yield return BottomRight;
         yield return Bottom;
         yield return BottomLeft;
-        yield return BottomRight;
+        yield return TopLeft;
     }
-    public IEnumerable<Vector2> GetVertexOffsets()
+    public static IEnumerable<Vector2> GetVertexOffsets()
     {
+        // todo: cache
         float h = Mathf.Sqrt(3) / 2;
         yield return new Vector2(0.5f, h);
         yield return new Vector2(1f, 0);
@@ -87,6 +88,17 @@ public readonly struct HexPosition
         yield return new Vector2(-0.5f, -h);
         yield return new Vector2(-1f, 0);
         yield return new Vector2(-0.5f, h);
+    }
+    public static IEnumerable<Vector2> GetEdgeCenterOffsets()
+    {
+        // todo: cache
+        float h = Mathf.Sqrt(3) / 2;
+        yield return new Vector2(0, h);
+        yield return new Vector2(0.75f, h/2);
+        yield return new Vector2(0.75f, -h/2);
+        yield return new Vector2(0, -h);
+        yield return new Vector2(-0.75f, -h/2);
+        yield return new Vector2(-0.75f, h/2);
     }
 
     public override bool Equals(object obj)
@@ -101,4 +113,4 @@ public readonly struct HexPosition
     }
     public override string ToString() => $"hex {X} {Y}";
     #endregion
-}
+};
