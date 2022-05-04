@@ -43,7 +43,7 @@ public class GridManager : MonoBehaviour
     {
         if (!(0 <= hexPos.X && hexPos.X < size && 0 <= hexPos.Y && hexPos.Y < size))
             return false;
-        return middle.Distance(hexPos) < size/2;
+        return middle.Distance(hexPos) <= size/2;
     }
 
     #region Operations

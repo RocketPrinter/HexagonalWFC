@@ -151,7 +151,7 @@ public class TileSet : ScriptableObject
             Debug.LogWarning($"Failed to delete {failedPaths.Count} assets");
     }
 
-    [DrawGizmo(GizmoType.Active)]
+    //[DrawGizmo(GizmoType.Active)]
     static void DrawGizmo(Transform scr, GizmoType gizmoType)
     {
         Gizmos.color = Color.cyan;
