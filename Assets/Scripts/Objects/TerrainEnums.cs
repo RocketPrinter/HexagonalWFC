@@ -18,9 +18,9 @@ public static class TerrainTypeExtensions
     public static readonly (string name, Color color)[] All =
     {
         default,
-        (nameof(TerrainType.Grass),new(98, 172, 104)),
-        (nameof(TerrainType.Forest),new(100, 135, 103)),
-        (nameof(TerrainType.Sand),new(245, 222, 145)),
+        (nameof(TerrainType.Grass ),new( 98 / 255f, 172 / 255f, 104 / 255f)),
+        (nameof(TerrainType.Forest),new(100 / 255f, 135 / 255f, 103 / 255f)),
+        (nameof(TerrainType.Sand  ),new(245 / 255f, 222 / 255f, 145 / 255f)),
     };
 
     public const float treshold = 20;
@@ -56,9 +56,9 @@ public static class UtilityTypeExtensions
     public static readonly (string name, Color color)[] All =
     {
         default,
-        (nameof(UtilityType.Road),new(73, 88, 103)),
-        (nameof(UtilityType.Rail),new(189, 213, 234)),
-        (nameof(UtilityType.Water),new(97, 132, 216)),
+        (nameof(UtilityType.Road ),new( 73 / 255f,  88 / 255f, 103 / 255f)),
+        (nameof(UtilityType.Rail ),new(189 / 255f, 213 / 255f, 234 / 255f)),
+        (nameof(UtilityType.Water),new( 97 / 255f, 132 / 255f, 216 / 255f)),
     };
 
     public const float treshold = 20;

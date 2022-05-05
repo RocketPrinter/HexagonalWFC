@@ -13,7 +13,7 @@ public class Tile : ScriptableObject
     public bool symmetric;
     [HideInInspector]
     public HexSide rotation;
-    public Quaternion rotationQuaternion => Quaternion.Euler(-90f, 60f * rotation, 0);
+    public Quaternion rotationQuaternion => Quaternion.Euler(-90f, 180 + 60f * rotation, 0);
 
     [HorizontalLine]
     public UtilityType provider;

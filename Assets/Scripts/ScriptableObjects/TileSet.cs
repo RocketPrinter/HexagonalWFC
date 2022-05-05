@@ -78,7 +78,7 @@ public class TileSet : ScriptableObject
         Debug.Log($"Processed {gos.Length} prefabs");
     }*/
 
-    //[Button]
+    [Button]
     void ProcessAll()
     {   
         List<string> paths = new();
@@ -132,9 +132,9 @@ public class TileSet : ScriptableObject
             AssetDatabase.CreateAsset(so, path + "/Tiles/" + prefab.name + ".asset");
         }
         
-        var colors = ColorPicker.ColorpickMultiple(prefab,rays);
-        foreach (var c in colors)
-            Debug.Assert(c.hit==false);
+        //var colors = ColorPicker.ColorpickMultiple(prefab,rays);
+        //foreach (var c in colors)
+        //    Debug.Assert(c.hit==false);
 
         //so.terrains = colors [0..5 ].Select(c => c.color.ToTerrainType()).ToArray();
         //so.utilities = colors[6..11].Select(c => c.color.ToUtilityType()).ToArray();

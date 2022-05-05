@@ -163,7 +163,7 @@ public class Slot : MonoBehaviour
             if (child != null)
                 Destroy(child);
             child = Instantiate(tile.prefab, transform.position, tile.rotationQuaternion, transform);
-            child.name = tile.name; // makes sure prefab maches tile name
+            child.name = tile.name; // makes sure prefab matches tile name
 
             return;
         }
@@ -191,7 +191,25 @@ public class Slot : MonoBehaviour
         
         for (int i = 1; i < coords.Count; i++)
             Gizmos.DrawLine(coords[i-1],coords[i]);
-        Gizmos.DrawLine(coords[coords.Count-1],coords[0]);
+        Gizmos.DrawLine(coords[coords.Count-1],coords[0]);  
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (Application.isPlaying == false) return;
+        var edgeCenters = HexPosition.GetEdgeCenterOffsets().Select(v2 => transform.position + new Vector3(v2.x, 2, v2.y) * 0.9f).ToList();
+
+        for (int i=0;i<6;i++)
+        {
+            int j = 0;
+            foreach (var pair in GetSideCache(i))
+            {
+                Gizmos.color = pair.Item1.GetColor();
+                Gizmos.DrawSphere(edgeCenters[i] + new Vector3(0, j * 0.3f, 0), 0.1f);
+
+                j++;
+            }
+        }
     }
 
     [Dropdown("GetTileDropdown")]
