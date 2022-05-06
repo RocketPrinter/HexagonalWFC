@@ -5,6 +5,9 @@ using UnityEngine;
 using System.Linq;
 using TMPro;
 using NaughtyAttributes;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [SelectionBase] // very cool attribute
 public class Slot : MonoBehaviour
@@ -14,8 +17,7 @@ public class Slot : MonoBehaviour
     public GridManager manager;
     public HexPosition hexPos;
 
-    HashSet<Tile> superpositions;
-    public IReadOnlyCollection<Tile> Superpositions => superpositions;
+    public HashSet<Tile> superpositions;
     public bool collapsed => superpositions.Count == 1;
 
     // used for visuals
@@ -90,6 +92,7 @@ public class Slot : MonoBehaviour
     // collapses tile and propagates changes
     public void Collapse(Tile tile, RemoveSuperpositionsChange op)
     {
+        if (collapsed || superpositions.Count == 0) return;
         manager.AssertNoPendingUpdates();
 
         Debug.Assert(superpositions.Contains(tile));
@@ -182,21 +185,9 @@ public class Slot : MonoBehaviour
     #endregion
 
 #if UNITY_EDITOR
-    private void OnDrawGizmos()
-    {
-        const float mul = 0.9f;
-        var coords = HexPosition.GetVertexOffsets().Select(v2 => transform.position + new Vector3(v2.x,0,v2.y) * mul).ToList();
-
-        Gizmos.color = hexPos == manager.middle ? Color.yellow : Color.green;
-        
-        for (int i = 1; i < coords.Count; i++)
-            Gizmos.DrawLine(coords[i-1],coords[i]);
-        Gizmos.DrawLine(coords[coords.Count-1],coords[0]);  
-    }
-
     private void OnDrawGizmosSelected()
     {
-        if (Application.isPlaying == false) return;
+        if (Application.isPlaying == false || !manager.visualizeSlotCaches) return;
         var edgeCenters = HexPosition.GetEdgeCenterOffsets().Select(v2 => transform.position + new Vector3(v2.x, 2, v2.y) * 0.9f).ToList();
 
         for (int i=0;i<6;i++)
@@ -228,7 +219,7 @@ public class Slot : MonoBehaviour
     }
 
     [Button("Collapse")]
-    public void CollapseButton()
+    void CollapseButton()
     {
         if (tileSelector == null || !superpositions.Contains(tileSelector)) return;
 
@@ -237,5 +228,8 @@ public class Slot : MonoBehaviour
 
         Collapse(tileSelector, change);
     }
+
+    [Button]
+    void GoToManager() => Selection.activeObject = manager;
 #endif
 }

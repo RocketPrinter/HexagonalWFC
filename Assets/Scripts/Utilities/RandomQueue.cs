@@ -8,7 +8,7 @@ public class RandomQueue<T>
 
     public RandomQueue() => rand = new();
 
-    public RandomQueue(int seed) => rand = new(seed);
+    public RandomQueue(System.Random rand) => this.rand = rand;
 
     public int Count => dict.Count;
     public IEnumerable<T> Values => dict.Values;
