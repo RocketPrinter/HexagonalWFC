@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Water
   m_EditorClassIdentifier: 
   prefab: {fileID: 6572683484597976625, guid: 93d53c1b2e011ad4dadf2ec7b3d21160, type: 3}
-  symmetric: 0
+  symmetric: 1
   provider: 0
   receiver: 0
-  terrainEdges: 000000000000000000000000000000000000000000000000
+  terrainEdges: 030000000300000003000000030000000300000003000000
   utilityEdges: 000000000000000000000000000000000000000000000000

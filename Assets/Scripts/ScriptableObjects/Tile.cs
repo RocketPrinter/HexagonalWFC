@@ -16,8 +16,7 @@ public class Tile : ScriptableObject
     public Quaternion rotationQuaternion => Quaternion.Euler(-90f, 180 + 60f * rotation, 0);
 
     [HorizontalLine]
-    public UtilityType provider;
-    public UtilityType receiver;
+    public float bias = 1;
 
     [HorizontalLine]
     [ValidateInput("ValidateTerrainEdges")]

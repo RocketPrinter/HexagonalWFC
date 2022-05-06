@@ -437,8 +437,17 @@ MonoBehaviour:
   superpositionPrefab: {fileID: 6700935263576062110, guid: a33107024a64c1e46a3c5f65d9a71caf,
     type: 3}
   tileset: {fileID: 11400000, guid: 391db5973744943499e6554ecfe6fd9c, type: 2}
-  size: 11
+  size: 9
+  seed: 0
   throwOnInvalidStates: 0
+  autoUpdate: 1
+  autoUpdateTime: 0.01
+  autoCollapse: 1
+  autoCollapseTime: 0.1
+  recursionLimit: 99999999
+  collapsedTiles: 0
+  pendingUpdates: 0
+  visualizeSlotCaches: 0
 --- !u!4 &1924448874
 Transform:
   m_ObjectHideFlags: 0

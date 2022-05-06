@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Grass
   m_EditorClassIdentifier: 
   prefab: {fileID: -1695386897620489773, guid: 93d53c1b2e011ad4dadf2ec7b3d21160, type: 3}
-  symmetric: 0
+  symmetric: 1
   provider: 0
   receiver: 0
-  terrainEdges: 000000000000000000000000000000000000000000000000
+  terrainEdges: 010000000100000001000000010000000100000001000000
   utilityEdges: 000000000000000000000000000000000000000000000000
