@@ -75,7 +75,7 @@ public class GridManager : MonoBehaviour
     }
 
     // handles auto updating and auto collapsing 
-    public void Auto()
+    void Auto()
     {
         // never auto collapse if there are updates to be processed
         if (updateQueue.Count > 0)
