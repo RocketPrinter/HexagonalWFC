@@ -48,8 +48,8 @@ public class GridManager : MonoBehaviour
     RandomQueue<UpdateInfo> updateQueue;
     bool pendingUpdates => updateQueue.Count > 0;
 
-    // todo: simplify the changes system
-    Stack<IChange> changesStack = new();
+    Stack<List<(Slot slot, Tile removed)> > undoStack = new();
+    
     #region Init
     void Awake()
     {
@@ -151,7 +151,7 @@ public class GridManager : MonoBehaviour
             return;
 
         var info = updateQueue.PopRandom();
-        info.slot.UpdateFromSide(info.side, info.other, info.change);
+        info.slot.UpdateFromSide(info.side, info.other);
     }
     
     [Button]
@@ -199,31 +199,34 @@ public class GridManager : MonoBehaviour
 
         var p = candidates.Count == 0 ? candidates[0] : candidates[rand.Next(candidates.Count)];
         var slot = grid[p.X, p.Y];
-        var change = new RemoveSuperpositionsChange();
-        RegisterChange(change);
 
-        slot.CollapseRandom(change);
+        slot.CollapseRandom();
     }
     #endregion
 
-    #region Changes
-    public void RegisterChange(IChange op) => changesStack.Push(op);
-
-    [Button("Undo")]
-    public void UndoChange()
+    #region Undo
+    public void RegisterRemovedSuperposition(Slot slot, Tile removed)
     {
-        AssertNoPendingUpdates();
-        if (changesStack.Count > 0)
-            changesStack.Pop().Undo();
+        if (undoStack.Count == 0) undoStack.Push(new());
+        undoStack.Peek().Add((slot, removed));
+    }
+    
+    public void RegisterRemovedSuperpositions(Slot slot, IEnumerable<Tile> removed)
+    {
+        if (undoStack.Count == 0) undoStack.Push(new());
+        undoStack.Peek().AddRange(removed.Select(r=> (slot,r)));
     }
 
-    //[Button]
-    public void RefreshAll()
+    public void RegisterUndoPoint() => undoStack.Push(new());
+
+    [Button("Undo")]
+    public void Undo()
     {
         AssertNoPendingUpdates();
         
-        // todo: what was this supposed to do?
-        throw new NotImplementedException();
+        if (undoStack.Count > 0)
+            foreach (var (slot, removed) in undoStack.Pop())
+                slot.AddSuperpositionWithoutPropagation(removed);
     }
     #endregion
 

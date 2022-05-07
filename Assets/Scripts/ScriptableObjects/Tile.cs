@@ -13,7 +13,7 @@ public class Tile : ScriptableObject
     public bool symmetric;
     [HideInInspector]
     public HexSide rotation;
-    public Quaternion rotationQuaternion => Quaternion.Euler(-90f, 180 + 60f * rotation, 0);
+    public Quaternion rotationQuaternion => Quaternion.Euler(-90f, symmetric ? Mathf.Floor(UnityEngine.Random.Range(0,5.999999999999f)) : (180 + 60f * rotation), 0);
 
     [HorizontalLine, MinValue(0.00000001f)]
     public double bias = 1;

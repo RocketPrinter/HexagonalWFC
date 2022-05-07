@@ -77,13 +77,13 @@ public class Slot : MonoBehaviour
     }
 
     // collapses tile and propagates changes
-    public void Collapse(Tile tile, RemoveSuperpositionsChange op)
+    public void Collapse(Tile tile)
     {
         if (isCollapsed || isInvalid) return;
         manager.AssertNoPendingUpdates();
 
         Debug.Assert(superpositions.Contains(tile));
-        op.RegisterRemoved(this, superpositions.Where(t=>t!=tile));
+        manager.RegisterRemovedSuperpositions(this, superpositions.Where(t => t != tile));
         
         superpositions.Clear();
         superpositions.Add(tile);
@@ -91,11 +91,11 @@ public class Slot : MonoBehaviour
         sideCacheValid = false;
         queueVisualsUpdate = true;
         
-        UpdateNeighbours(op);
+        UpdateNeighbours();
     }
 
     // collapses tile and propagates changes
-    public void CollapseRandom(RemoveSuperpositionsChange op)
+    public void CollapseRandom()
     {
         if (isCollapsed || isInvalid) return;
         manager.AssertNoPendingUpdates();
@@ -104,11 +104,11 @@ public class Slot : MonoBehaviour
         Tile target = superpositions.Select(t => (manager.rand.NextDouble() / t.bias, t))
             .Aggregate((bestP, p) => p.Item1 <= bestP.Item1 ? p : bestP).Item2;
 
-        Collapse(target, op);
+        Collapse(target);
     }
 
     // NEVER CALL DIRECTLY! Use manager.RegisterUpdate
-    public void UpdateFromSide(HexSide side, Slot otherSlot, RemoveSuperpositionsChange op)
+    public void UpdateFromSide(HexSide side, Slot otherSlot)
     {
         if (isCollapsed) return;
 
@@ -121,35 +121,35 @@ public class Slot : MonoBehaviour
 
         if (remove.Count == 0) return;
 
-        op.RegisterRemoved(this, remove);
+        manager.RegisterRemovedSuperpositions(this, remove);
         foreach (var tile in remove)
             superpositions.Remove(tile);
         sideCacheValid = false;
         queueVisualsUpdate = true;
 
-        UpdateNeighbours(side, op);
+        UpdateNeighbours(side);
     }
 
     // propagates to neighbouring slots
-    void UpdateNeighbours(RemoveSuperpositionsChange op)
+    void UpdateNeighbours()
     {
         int i = 0;
         foreach (var pos in hexPos.GetNeighbours())
         {
             if (manager.InBounds(pos))
-                manager.RegisterUpdate(new(manager.grid[pos.X, pos.Y], new HexSide(i).Opposite, this, op));
+                manager.RegisterUpdate(new(manager.grid[pos.X, pos.Y], new HexSide(i).Opposite, this));
             i++;
         }
     }
 
     // propagates to neighbouring slots minus one
-    void UpdateNeighbours(HexSide minus, RemoveSuperpositionsChange op)
+    void UpdateNeighbours(HexSide minus)
     {
         int i = 0;
         foreach (var pos in hexPos.GetNeighbours())
         {
             if (manager.InBounds(pos) && i != minus)
-                manager.RegisterUpdate(new(manager.grid[pos.X, pos.Y], new HexSide(i).Opposite, this, op));
+                manager.RegisterUpdate(new(manager.grid[pos.X, pos.Y], new HexSide(i).Opposite, this));
             i++;
         }
     }
@@ -171,6 +171,7 @@ public class Slot : MonoBehaviour
         }
     }
 
+    // todo: optimise gameobject use and maybe use mesh instancing or or something I dunno
     void UpdateVisuals()
     {
         if (isCollapsed)
@@ -241,10 +242,7 @@ public class Slot : MonoBehaviour
     {
         if (tileSelector == null || !superpositions.Contains(tileSelector)) return;
 
-        var change = new RemoveSuperpositionsChange();
-        manager.RegisterChange(change);
-
-        Collapse(tileSelector, change);
+        Collapse(tileSelector);
     }
 
     [Button]
