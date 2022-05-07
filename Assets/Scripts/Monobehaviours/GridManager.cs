@@ -40,14 +40,20 @@ public class GridManager : MonoBehaviour
     public float autoCollapseTime = 0.2f;
     float _autoCollapseTime;
     #endregion
+
     public HexPosition middle;
     public Slot[,] grid;
+    public System.Random rand;
 
-    RandomQueue<(Slot slot, HexSide side, Slot other, RemoveSuperpositionsChange change)> updateQueue;
+    RandomQueue<UpdateInfo> updateQueue;
+    bool pendingUpdates => updateQueue.Count > 0;
+
+    // todo: simplify the changes system
     Stack<IChange> changesStack = new();
-    System.Random rand;
 
-    #region Misc
+    bool inAuto; // prevents needless recursion
+
+    #region Init
     void Awake()
     {
         if (seed == 0)
@@ -66,48 +72,71 @@ public class GridManager : MonoBehaviour
                     Slot.Create(this, pos);
             }
     }
+    #endregion
 
-    private void FixedUpdate()
+    #region Misc
+    public bool InBounds(HexPosition hexPos)
+    {
+        if (!(0 <= hexPos.X && hexPos.X < size && 0 <= hexPos.Y && hexPos.Y < size))
+            return false;
+        return middle.Distance(hexPos) <= size / 2;
+    }
+    #endregion
+
+    #region Auto
+    void FixedUpdate()
     {
         _autoUpdateTime -= Time.deltaTime;
         _autoCollapseTime -= Time.deltaTime;
         Auto();
     }
 
-    // handles auto updating and auto collapsing 
+    // handles auto updating and auto collapsing
+    // processing is done in a loop instead of recursively to prevent stack overflows when generating large grids
     void Auto()
     {
-        // never auto collapse if there are updates to be processed
-        if (updateQueue.Count > 0)
+        if (inAuto) return;
+        inAuto = true;
+        
+        while(true)
         {
-            if (!autoUpdate) return;
-
-            if (autoUpdateTime == 0)
-                UpdateAll();
-            
-            else if (_autoUpdateTime <= 0)
+            if (pendingUpdates && autoUpdate)
             {
-                _autoUpdateTime = autoUpdateTime;
-                UpdateOnce();
-                
-                if (updateQueue.Count > 0)
-                    return;
+                // instant updating
+                if (autoUpdateTime == 0)
+                    UpdateAll();
+
+                // update just once
+                else if (_autoUpdateTime <= 0)
+                {
+                    _autoUpdateTime = autoUpdateTime;
+                    UpdateOnce();
+                }
             }
+
+            // only collapse if there are no pending updates
+            if (!pendingUpdates && autoCollapse)
+            {
+                // collapse and loop again
+                if (autoCollapseTime == 0)
+                {
+                    CollapseRandom();
+                    continue;
+                }
+
+                // collapse just once
+                else if (_autoCollapseTime <= 0)
+                {
+                    _autoCollapseTime = autoCollapseTime;
+                    CollapseRandom();
+                }
+            }
+
+            // wait for next frame
+            break;
         }
 
-        if (autoCollapse && _autoCollapseTime <= 0)
-        {
-            // can cause stack overflows because Auto() gets called again when calling CollapseRandom()
-            _autoCollapseTime = autoCollapseTime;
-            CollapseRandom();
-        }
-    }
-
-    public bool InBounds(HexPosition hexPos)
-    {
-        if (!(0 <= hexPos.X && hexPos.X < size && 0 <= hexPos.Y && hexPos.Y < size))
-            return false;
-        return middle.Distance(hexPos) <= size/2;
+        inAuto = false;
     }
     #endregion
 
@@ -118,9 +147,17 @@ public class GridManager : MonoBehaviour
             throw new InvalidOperationException();
     }
 
-    public void RegisterUpdate(Slot slot, HexSide side, Slot other, RemoveSuperpositionsChange change)
+    public void RegisterUpdate(UpdateInfo info)
     {
-        updateQueue.Push((slot, side, other, change));
+        updateQueue.Push(info);
+
+        Auto();
+    }
+
+    public void RegisterUpdates(IEnumerable<UpdateInfo> infos)
+    {
+        foreach (var info in infos)
+            updateQueue.Push(info);
 
         Auto();
     }
@@ -159,15 +196,15 @@ public class GridManager : MonoBehaviour
                 if (!InBounds(pos))
                     continue;
 
-                int superpositons = grid[pos.X, pos.Y].superpositions.Count;
-                if (superpositons <= 1) continue;
-                if (superpositons < best)
+                int entropy = grid[pos.X, pos.Y].entropy;
+                if (entropy <= 1) continue;
+                if (entropy < best)
                 {
-                    best = superpositons;
+                    best = entropy;
                     candidates.Clear();
                     candidates.Add(pos);
                 }
-                else if (superpositons == best)
+                else if (entropy == best)
                     candidates.Add(pos);
             }
 
@@ -180,14 +217,10 @@ public class GridManager : MonoBehaviour
 
         var p = candidates.Count == 0 ? candidates[0] : candidates[rand.Next(candidates.Count)];
         var slot = grid[p.X, p.Y];
-        //todo: very very very very very bad
-        var tile = slot.superpositions.Count == 0 ? slot.superpositions.First() : slot.superpositions.ElementAt(rand.Next(slot.superpositions.Count));
-
-        // todo: some sort of weighted tile picking
         var change = new RemoveSuperpositionsChange();
         RegisterChange(change);
 
-        slot.Collapse(tile ,change);
+        slot.CollapseRandom(change);
     }
     #endregion
 
@@ -213,13 +246,14 @@ public class GridManager : MonoBehaviour
     #endregion
 
     #region Debug
+#if UNITY_EDITOR
     [HorizontalLine, Header("Debug")]
     [SerializeField, ProgressBar("Collapsed", "maxTiles", EColor.Green)]
     int collapsedTiles;
     int maxTiles = 0;
 
     [ReadOnly, SerializeField]
-    int pendingUpdates;
+    int pendingUpdatesNr;
     
     public bool visualizeSlotCaches = true;
 
@@ -231,12 +265,12 @@ public class GridManager : MonoBehaviour
 
     private void Update()
     {
-        pendingUpdates = updateQueue.Count;
+        pendingUpdatesNr = updateQueue.Count;
 
         collapsedTiles = 0;
         for (int i = 0; i < size; i++)
             for (int j = 0; j < size; j++)
-                if (grid[i, j] != null && grid[i,j].collapsed)
+                if (grid[i, j] != null && grid[i,j].isCollapsed)
                     collapsedTiles++;
     }
 
@@ -270,5 +304,6 @@ public class GridManager : MonoBehaviour
             Gizmos.DrawSphere(spherePos, 0.1f);
         }
     }
+#endif
     #endregion
 }
