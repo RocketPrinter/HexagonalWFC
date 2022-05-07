@@ -15,8 +15,8 @@ public class Tile : ScriptableObject
     public HexSide rotation;
     public Quaternion rotationQuaternion => Quaternion.Euler(-90f, 180 + 60f * rotation, 0);
 
-    [HorizontalLine]
-    public float bias = 1;
+    [HorizontalLine, MinValue(0.00000001f)]
+    public double bias = 1;
 
     [HorizontalLine]
     [ValidateInput("ValidateTerrainEdges")]

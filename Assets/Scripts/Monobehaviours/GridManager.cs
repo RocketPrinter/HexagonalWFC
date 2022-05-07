@@ -50,9 +50,6 @@ public class GridManager : MonoBehaviour
 
     // todo: simplify the changes system
     Stack<IChange> changesStack = new();
-
-    bool inAuto; // prevents needless recursion
-
     #region Init
     void Awake()
     {
@@ -95,9 +92,6 @@ public class GridManager : MonoBehaviour
     // processing is done in a loop instead of recursively to prevent stack overflows when generating large grids
     void Auto()
     {
-        if (inAuto) return;
-        inAuto = true;
-        
         while(true)
         {
             if (pendingUpdates && autoUpdate)
@@ -135,8 +129,6 @@ public class GridManager : MonoBehaviour
             // wait for next frame
             break;
         }
-
-        inAuto = false;
     }
     #endregion
 
@@ -150,16 +142,6 @@ public class GridManager : MonoBehaviour
     public void RegisterUpdate(UpdateInfo info)
     {
         updateQueue.Push(info);
-
-        Auto();
-    }
-
-    public void RegisterUpdates(IEnumerable<UpdateInfo> infos)
-    {
-        foreach (var info in infos)
-            updateQueue.Push(info);
-
-        Auto();
     }
 
     [Button]
