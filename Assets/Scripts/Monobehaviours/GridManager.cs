@@ -45,10 +45,13 @@ public class GridManager : MonoBehaviour
     public Slot[,] grid;
     public System.Random rand;
 
+    SortedDictionary<int, HashSet<Slot>> entropyCache = new();
+    
     RandomQueue<UpdateInfo> updateQueue;
     bool pendingUpdates => updateQueue.Count > 0;
 
-    Stack<List<(Slot slot, Tile removed)> > undoStack = new();
+    Stack<List<Connection> > undoStack = new();
+
     
     #region Init
     void Awake()
@@ -71,12 +74,26 @@ public class GridManager : MonoBehaviour
     }
     #endregion
 
-    #region Misc
-    public bool InBounds(HexPosition hexPos)
+    #region Entropy Cache
+    public void UpdateEntropyCache(Slot slot, int oldEntropy, int newEntropy)
     {
-        if (!(0 <= hexPos.X && hexPos.X < size && 0 <= hexPos.Y && hexPos.Y < size))
-            return false;
-        return middle.Distance(hexPos) <= size / 2;
+        if (oldEntropy == newEntropy)
+            return;
+
+        if (oldEntropy > 1)
+            GetCacheLevel(oldEntropy).Remove(slot);
+        if (newEntropy > 1)
+            GetCacheLevel(newEntropy).Add(slot);
+
+        HashSet<Slot> GetCacheLevel (int level)
+        {
+            if (entropyCache.TryGetValue(level, out var set))
+                return set;
+            
+            var newSet = new HashSet<Slot>();
+            entropyCache.Add(level, newSet);
+            return newSet;
+        }
     }
     #endregion
 
@@ -168,38 +185,24 @@ public class GridManager : MonoBehaviour
     {
         AssertNoPendingUpdates();
 
-        // todo: optimize
-        int best = int.MaxValue;
-        List<HexPosition> candidates = new();
-        for (int i=0;i<size;i++)
-            for (int j=0;j<size;j++)
-            {
-                HexPosition pos = new(i, j);
-                if (!InBounds(pos))
-                    continue;
+        Slot slot = null;
+        foreach (var kvp in entropyCache)
+        {
+            if (kvp.Key <= 1 || kvp.Value.Count == 0)
+                continue;
+            // could be optimizised further but eh
+            slot = kvp.Value.ToArray()[rand.Next(kvp.Value.Count)];
+            break;
+        }
 
-                int entropy = grid[pos.X, pos.Y].entropy;
-                if (entropy <= 1) continue;
-                if (entropy < best)
-                {
-                    best = entropy;
-                    candidates.Clear();
-                    candidates.Add(pos);
-                }
-                else if (entropy == best)
-                    candidates.Add(pos);
-            }
-
-        if (candidates.Count == 0)
+        if (slot == null)
         {
             // no tiles left to collapse
+            Debug.Log("Tile generation done!");
             autoCollapse = false;
             return;
         }
-
-        var p = candidates.Count == 0 ? candidates[0] : candidates[rand.Next(candidates.Count)];
-        var slot = grid[p.X, p.Y];
-
+        
         slot.CollapseRandom();
     }
     #endregion
@@ -208,13 +211,13 @@ public class GridManager : MonoBehaviour
     public void RegisterRemovedSuperposition(Slot slot, Tile removed)
     {
         if (undoStack.Count == 0) undoStack.Push(new());
-        undoStack.Peek().Add((slot, removed));
+        undoStack.Peek().Add(new Connection(slot, removed));
     }
     
     public void RegisterRemovedSuperpositions(Slot slot, IEnumerable<Tile> removed)
     {
         if (undoStack.Count == 0) undoStack.Push(new());
-        undoStack.Peek().AddRange(removed.Select(r=> (slot,r)));
+        undoStack.Peek().AddRange(removed.Select(r=> new Connection(slot,r)));
     }
 
     public void RegisterUndoPoint() => undoStack.Push(new());
@@ -227,6 +230,15 @@ public class GridManager : MonoBehaviour
         if (undoStack.Count > 0)
             foreach (var (slot, removed) in undoStack.Pop())
                 slot.AddSuperpositionWithoutPropagation(removed);
+    }
+    #endregion
+    
+    #region Misc
+    public bool InBounds(HexPosition hexPos)
+    {
+        if (!(0 <= hexPos.X && hexPos.X < size && 0 <= hexPos.Y && hexPos.Y < size))
+            return false;
+        return middle.Distance(hexPos) <= size / 2;
     }
     #endregion
 

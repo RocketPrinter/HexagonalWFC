@@ -31,6 +31,8 @@ public class Slot : MonoBehaviour
     bool sideCacheValid = false;
     public HashSet<(TerrainType, UtilityType)>[] _cache = new HashSet<(TerrainType, UtilityType)>[6];
 
+    int lastCachedEntropy = -1;
+
     #region init
     public static Slot Create(GridManager manager, HexPosition hexPos)
     {
@@ -48,11 +50,12 @@ public class Slot : MonoBehaviour
         manager.grid[hexPos.X, hexPos.Y] = slot;
         slot.superpositions = manager.tileset.GetTiles().ToHashSet();
 
+        slot.UpdateCaches();
         return slot;
     }
     #endregion
 
-    #region Side cache
+    #region Caches
     public HashSet<(TerrainType, UtilityType)> GetSideCache(HexSide side)
     {
         if (sideCacheValid == false)
@@ -66,14 +69,29 @@ public class Slot : MonoBehaviour
 
         return _cache[side];
     }
+
+    void UpdateCaches()
+    {
+        sideCacheValid = false;
+        UpdateEntropyCache();
+        queueVisualsUpdate = true;
+    }
+
+    void UpdateEntropyCache()
+    {
+        if (entropy == lastCachedEntropy)
+            return;
+        manager.UpdateEntropyCache(this, lastCachedEntropy, entropy);
+        lastCachedEntropy = entropy;
+    }
     #endregion
 
     #region Superpositions
     public void AddSuperpositionWithoutPropagation(Tile tile)
     {
         superpositions.Add(tile);
-        sideCacheValid = false;
-        queueVisualsUpdate = true;
+
+        UpdateCaches();
     }
 
     // collapses tile and propagates changes
@@ -88,8 +106,7 @@ public class Slot : MonoBehaviour
         superpositions.Clear();
         superpositions.Add(tile);
 
-        sideCacheValid = false;
-        queueVisualsUpdate = true;
+        UpdateCaches();
         
         UpdateNeighbours();
     }
@@ -124,8 +141,7 @@ public class Slot : MonoBehaviour
         manager.RegisterRemovedSuperpositions(this, remove);
         foreach (var tile in remove)
             superpositions.Remove(tile);
-        sideCacheValid = false;
-        queueVisualsUpdate = true;
+        UpdateCaches();
 
         UpdateNeighbours(side);
     }

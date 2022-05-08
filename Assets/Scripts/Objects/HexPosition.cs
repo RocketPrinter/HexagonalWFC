@@ -78,27 +78,31 @@ public readonly struct HexPosition
         yield return BottomLeft;
         yield return TopLeft;
     }
-    public static IEnumerable<Vector2> GetVertexOffsets()
+    public static Vector2[] GetVertexOffsets()
     {
-        // todo: cache
         float h = Mathf.Sqrt(3) / 2;
-        yield return new Vector2(0.5f, h);
-        yield return new Vector2(1f, 0);
-        yield return new Vector2(0.5f, -h);
-        yield return new Vector2(-0.5f, -h);
-        yield return new Vector2(-1f, 0);
-        yield return new Vector2(-0.5f, h);
+        return new Vector2[6]
+        {
+            new Vector2(0.5f, h),
+            new Vector2(1f, 0),
+            new Vector2(0.5f, -h),
+            new Vector2(-0.5f, -h),
+            new Vector2(-1f, 0),
+            new Vector2(-0.5f, h),
+        };
     }
-    public static IEnumerable<Vector2> GetEdgeCenterOffsets()
+    public static Vector2[] GetEdgeCenterOffsets()
     {
-        // todo: cache
         float h = Mathf.Sqrt(3) / 2;
-        yield return new Vector2(0, h);
-        yield return new Vector2(0.75f, h/2);
-        yield return new Vector2(0.75f, -h/2);
-        yield return new Vector2(0, -h);
-        yield return new Vector2(-0.75f, -h/2);
-        yield return new Vector2(-0.75f, h/2);
+        return new Vector2[6]
+        {
+            new Vector2(0, h),
+            new Vector2(0.75f, h / 2),
+            new Vector2(0.75f, -h / 2),
+            new Vector2(0, -h),
+            new Vector2(-0.75f, -h / 2),
+            new Vector2(-0.75f, h / 2),
+        };
     }
 
     public override bool Equals(object obj)
