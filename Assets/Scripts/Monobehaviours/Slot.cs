@@ -39,7 +39,7 @@ public class Slot : MonoBehaviour
         if (!manager.InBounds(hexPos) || manager.grid[hexPos.X, hexPos.Y] != null)
             throw new InvalidOperationException();
 
-        var go = new GameObject($"Slot {{ {hexPos.X}, {hexPos.Y}}}");
+        var go = new GameObject($"Slot ({hexPos.X}, {hexPos.Y})");
         go.transform.SetParent(manager.transform);
         var v2 = hexPos.ToGrid() - manager.middle.ToGrid();
         go.transform.position = new Vector3(v2.x,0,v2.y);
@@ -101,6 +101,8 @@ public class Slot : MonoBehaviour
         manager.AssertNoPendingUpdates();
 
         Debug.Assert(superpositions.Contains(tile));
+
+        manager.RegisterUndoPoint();
         manager.RegisterRemovedSuperpositions(this, superpositions.Where(t => t != tile));
         
         superpositions.Clear();
